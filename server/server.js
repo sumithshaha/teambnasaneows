@@ -20,7 +20,11 @@ app.set('trust proxy', 1);
 
 // Middleware
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(helmet());
 
 // Rate limiting
@@ -36,19 +40,64 @@ if (!process.env.MONGODB_URI) {
   process.exit(1);
 }
 
-mongoose.connect(process.env.MONGODB_URI, { 
-  useNewUrlParser: true, 
-  useUnifiedTopology: true,
-})
+// MongoDB connection
+mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB'))
-  .catch(err => {
-    console.error('Could not connect to MongoDB', err);
-    process.exit(1);
-  });
+  .catch(err => console.error('Could not connect to MongoDB', err));
+
+
+// Welcome page route
+app.get('/', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Welcome to Our API Server</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+            h1 {
+                color: #4a4a4a;
+            }
+            .endpoint {
+                background-color: #f4f4f4;
+                padding: 10px;
+                margin-bottom: 10px;
+                border-radius: 5px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Welcome to Our API Server</h1>
+        <p>This server provides the following endpoints:</p>
+        <div class="endpoint">
+            <strong>POST /api/register</strong>: Register a new user
+        </div>
+        <div class="endpoint">
+            <strong>POST /api/login</strong>: Login an existing user
+        </div>
+        <p>For more information, please refer to the API documentation.</p>
+    </body>
+    </html>
+  `);
+});
+
+// Your existing routes
+app.post('/api/register', /* your registration logic */);
+app.post('/api/login', /* your login logic */);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
+});
 
 // User model
 const userSchema = new mongoose.Schema({
